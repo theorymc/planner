@@ -1,0 +1,6 @@
+{
+    "require": {
+        "theory/builder": "dev-master",
+        "paragonie/random_compat": "^2.0"
+    }
+}
