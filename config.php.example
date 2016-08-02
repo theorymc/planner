@@ -1,0 +1,14 @@
+<?php
+
+return [
+    "start" => [
+        "x" => 200,
+        "y" => 4,
+        "z" => 200,
+    ],
+    "rcon" => [
+        "ip" => "127.0.0.1",
+        "port" => 25575,
+        "password" => "<insert password>"
+    ],
+];
