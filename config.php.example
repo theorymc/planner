@@ -11,4 +11,5 @@ return [
         "port" => 25575,
         "password" => "<insert password>"
     ],
+    "build" => 1,
 ];

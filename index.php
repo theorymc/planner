@@ -166,8 +166,11 @@ $blocks = [
     [-7, 0, 7, "unpowered_repeater", 14],
     [-7, 0, 8, "unpowered_repeater", 14],
     [-7, 0, 9, "command_block", 4],
-    [-8, 0, 9, "chain_command_block", 2],
-    [-8, 0, 8, "chain_command_block", 2],
+    [-8, 0, 9, "chain_command_block", 4],
+    [-9, 0, 9, "unpowered_comparator", 3],
+    [-10, 0, 9, "unpowered_repeater", 15],
+    [-11, 0, 9, "unpowered_repeater", 15],
+    [-12, 0, 9, "command_block", 2],
     [-4, 0, 3, "redstone_wire"],
     [-3, 0, 3, "unpowered_repeater", 1],
     [-2, 0, 3, "redstone_wire"],
@@ -198,58 +201,74 @@ $clearStartX = $x;
 $clearStartY = $y;
 $clearStartZ = $z;
 
-foreach ($shuffled as $name) {
+// for ($i = 0; $i <= 20; $i++) {
+for ($i = 0; $i <= count($shuffled); $i++) {
     $clearEndX = $clearStartX - $sx;
     $clearEndY = $clearStartY + $sy;
     $clearEndZ = $clearStartZ + $sz;
 
     printLine($builder->exec("fill {$clearStartX} {$clearStartY} {$clearStartZ} {$clearEndX} {$clearEndY} {$clearEndZ} air"));
 
+    $builder->exec(teleportToCurrentCommand($clearStartX, $clearStartY, $clearStartZ));
+
     $clearStartZ += $sz + 1;
 }
 
 printLine($builder->exec("kill @e[type=Item]"));
+$builder->exec(teleportToOriginCommand($ox, $oy, $oz));
 
 foreach ($shuffled as $i => $name) {
-    $mz = $z;
-
     $name = trim($name);
 
     printLine("Building circuit for {$name}...");
-    printLine($builder->exec("say Building circuit for {$name}..."));
+    $builder->exec("say Building circuit for {$name}...");
 
     $cx = $x - $sx;
     $cy = $y + $sy;
     $cz = $z + $sz;
 
-    foreach ($blocks as $block) {
-        $dx = $x + $block[0];
-        $dy = $y + $block[1];
-        $dz = $z + $block[2];
+    if ($i < (int) $config["build"]) {
+        foreach ($blocks as $block) {
+            $dx = $x + $block[0];
+            $dy = $y + $block[1];
+            $dz = $z + $block[2];
 
-        $mz = max($mz, $dz);
+            $type = $block[3];
 
-        $type = $block[3];
+            if (isset($block[4])) {
+                $type .= " {$block[4]}";
+            }
 
-        if (isset($block[4])) {
-            $type .= " {$block[4]}";
+            if (isset($block[5])) {
+                $type .= " replace {$block[5]}";
+            }
+
+            $builder->exec("setblock {$dx} {$dy} {$dz} {$type}");
+            usleep(10000);
         }
+    } else {
+        $cloneStartX = $x;
+        $cloneStartY = $y;
+        $cloneStartZ = $z - $sz - 1;
+        $cloneEndX = $x - $sx;
+        $cloneEndY = $y + $sy;
+        $cloneEndZ = $z - 1;
+        $clonePlaceX = $cloneEndX;
+        $clonePlaceY = $y;
+        $clonePlaceZ = $cloneEndZ + 1;
 
-        if (isset($block[5])) {
-            $type .= " replace {$block[5]}";
-        }
+        $command = "clone {$cloneStartX} {$cloneStartY} {$cloneStartZ} {$cloneEndX} {$cloneEndY} {$cloneEndZ} {$clonePlaceX} {$clonePlaceY} {$clonePlaceZ} masked force";
 
-        $builder->exec("setblock {$dx} {$dy} {$dz} {$type}");
-        usleep(10000);
+        $builder->exec($command);
     }
 
     $data = [
         [-7, 0, 3, sprintf('{Command: "say winner is %s!"}', $name)],
-        [-7, 0, 4, sprintf('{Command: "fill %s %s %s %s %s %s air"}', $x, $y, $z, $cx + 2, $cy, $cz)],
+        [-7, 0, 4, sprintf('{Command: "fill %s %s %s %s %s %s air"}', $x, $y, $z, $cx + 6, $cy, $cz)],
         [-7, 0, 5, sprintf('{Command: "kill @e[type=Item]"}')],
-        [-7, 0, 9, sprintf('{Command: "fill %s %s %s %s %s %s redstone_wire"}', $cx + 3, $y, $z, $cx + 3, $y, $cz)],
-        [-8, 0, 9, sprintf('{Command: "setblock %s %s %s unpowered_repeater 2"}', $cx + 3, $y, $z + 5)],
-        [-8, 0, 8, sprintf('{Command: "%s"}', teleportToOriginCommand($ox, $oy, $oz))],
+        [-7, 0, 9, sprintf('{Command: "fill %s %s %s %s %s %s redstone_wire"}', $cx + 7, $y, $z, $cx + 7, $y, $cz)],
+        [-8, 0, 9, sprintf('{Command: "setblock %s %s %s unpowered_repeater 2"}', $cx + 7, $y, $z + 5)],
+        [-12, 0, 9, sprintf('{Command: "%s"}', teleportToOriginCommand($ox, $oy, $oz))],
         [-1, 0, 10, sprintf('{Command: "blockdata %s %s %s {Items:[{id:minecraft:record_11,Count:1,Slot:0b},{id:minecraft:dirt,Count:1,Slot:1b},{id:minecraft:dirt,Count:1,Slot:2b},{id:minecraft:dirt,Count:1,Slot:3b},{id:minecraft:dirt,Count:1,Slot:4b},{id:minecraft:dirt,Count:1,Slot:5b},{id:minecraft:dirt,Count:1,Slot:6b},{id:minecraft:dirt,Count:1,Slot:7b},{id:minecraft:dirt,Count:1,Slot:8b}]}"}', $x - 5, $y, $z)],
         [-1, 0, 11, sprintf('{Command: "blockdata %s %s %s {Items:[{id:minecraft:air,Count:1,Slot:0b},{id:minecraft:air,Count:1,Slot:1b},{id:minecraft:air,Count:1,Slot:2b},{id:minecraft:air,Count:1,Slot:3b},{id:minecraft:air,Count:1,Slot:4b}]}"}', $x - 5, $y, $z + 1)],
         [-1, 0, 12, sprintf('{Command: "%s"}', teleportToCurrentCommand($x, $y, $z))],
@@ -264,7 +283,7 @@ foreach ($shuffled as $i => $name) {
         usleep(10000);
     }
 
-    $z = $mz + 1;
+    $z += $sz + 1;
 
     if ($i + 1 < count($shuffled)) {
         $builder->exec(teleportToCurrentCommand($x, $y, $z));
